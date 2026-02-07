@@ -3,6 +3,33 @@
 // --------------------
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
+
+class Task {
+  constructor(text, priority = "low") {
+    this.id = crypto.randomUUID();
+    this.text = text.trim();
+    this.completed = false;
+    this.priority = priority; // "low", "medium", "high"
+  }
+
+  toggleComplete() {
+    this.completed = !this.completed;
+  }
+
+  editText(newText) {
+    if (newText && newText.trim()) {
+      this.text = newText.trim();
+    }
+  }
+
+  setPriority(newPriority) {
+    const valid = ["low", "medium", "high"];
+    if (valid.includes(newPriority)) {
+      this.priority = newPriority;
+    }
+  }
+}
+
 // --------------------
 // DOM references
 // --------------------
@@ -27,13 +54,15 @@ function renderTasks(taskArray = tasks) {
     li.dataset.id = task.id;
     li.className = task.completed ? "completed" : "";
     li.innerHTML = `
-      <span class="task-text">${task.text}</span>
-      <div class="actions">
-        <button class="toggle-btn">✓</button>
-        <button class="edit-btn">Edit</button>
-        <button class="delete-btn">✕</button>
-      </div>
-    `;
+  <span class="task-text">${task.text}</span>
+  <span class="priority">[${task.priority}]</span>
+  <div class="actions">
+    <button class="toggle-btn">${task.completed ? "Undo" : "✓"}</button>
+    <button class="edit-btn">Edit</button>
+    <button class="priority-btn">Priority</button>
+    <button class="delete-btn">✕</button>
+  </div>
+`;
 
     list.appendChild(li);
   });
@@ -93,6 +122,19 @@ list.addEventListener("click", (e) => {
       task.text = newText.trim();
     }
   }
+  if (e.target.classList.contains("toggle-btn")) {
+  task.toggleComplete();
+}
+
+if (e.target.classList.contains("edit-btn")) {
+  const newText = prompt("Edit task:", task.text);
+  task.editText(newText);
+}
+
+if (e.target.classList.contains("priority-btn")) {
+  const newPriority = prompt("Set priority: low, medium, or high", task.priority);
+  task.setPriority(newPriority);
+}
 
   saveTasks();
   renderTasks();
@@ -101,16 +143,12 @@ list.addEventListener("click", (e) => {
 // --------------------
 // Add task (example)
 // --------------------
-function addTask(text) {
-  tasks.push({
-    id: crypto.randomUUID(),
-    text: text.trim(),
-    completed: false,
-  });
-
+function addTask(text, priority = "low") {
+  tasks.push(new Task(text, priority));
   saveTasks();
   renderTasks();
 }
+
 
 // Initial render
 renderTasks();
@@ -127,5 +165,18 @@ function saveTasks() {
 function loadTasks() {
   tasks = JSON.parse(getStorage().getItem("tasks")) || [];
 }
+
+document.querySelector("#show-high").addEventListener("click", () => {
+  renderTasks(tasks.filter(t => t.priority === "high"));
+});
+
+document.querySelector("#show-medium").addEventListener("click", () => {
+  renderTasks(tasks.filter(t => t.priority === "medium"));
+});
+
+document.querySelector("#show-low").addEventListener("click", () => {
+  renderTasks(tasks.filter(t => t.priority === "low"));
+});
+
 loadTasks();
 renderTasks();
